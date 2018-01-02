@@ -1,0 +1,94 @@
+---
+version: '2'
+services:
+
+  zookeeper:
+    image: entrementesio/zookeeper:1.0.0
+    hostname: zookeeper01
+    domainname: entrementes.io
+    container_name: zookeeper01
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    networks:
+      kafka_cluster:
+        ipv4_address: 10.5.0.2
+    extra_hosts:
+      kafka01.entrementes.io: 10.5.0.3
+      kafka02.entrementes.io: 10.5.0.4
+      kafka03.entrementes.io: 10.5.0.5
+
+  kafka01:
+    image: entrementesio/kafka:1.0.0
+    hostname: kafka01
+    domainname: entrementes.io
+    container_name: kafka01
+    environment:
+      - KAFKA_ID=1
+      - KAFKA_PORT=9092
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./data/kafka01:/var/lib/kafka:rw 
+    networks:
+      kafka_cluster:
+        ipv4_address: 10.5.0.3
+    extra_hosts:
+      zookeeper: 10.5.0.2
+      kafka02.entrementes.io: 10.5.0.4
+      kafka03.entrementes.io: 10.5.0.5
+
+  kafka02:
+    image: entrementesio/kafka:1.0.0
+    hostname: kafka02
+    domainname: entrementes.io
+    container_name: kafka02
+    environment:
+      - KAFKA_ID=2
+      - KAFKA_PORT=9093
+    ports:
+      - 9093:9093
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./data/kafka02:/var/lib/kafka:rw
+    networks:
+      kafka_cluster:
+        ipv4_address: 10.5.0.4
+    extra_hosts:
+      zookeeper: 10.5.0.2
+      kafka01.entrementes.io: 10.5.0.3
+      kafka03.entrementes.io: 10.5.0.5
+
+  kafka03:
+    image: entrementesio/kafka:1.0.0
+    hostname: kafka03
+    domainname: entrementes.io
+    container_name: kafka03
+    environment:
+      - KAFKA_ID=3
+      - KAFKA_PORT=9094
+    ports:
+      - 9094:9094
+    depends_on:
+      - zookeeper
+    volumes:
+      - ./data/kafka03:/var/lib/kafka:rw
+    networks:
+      kafka_cluster:
+        ipv4_address: 10.5.0.5
+    extra_hosts:
+      zookeeper: 10.5.0.2
+      kafka01.entrementes.io: 10.5.0.3
+      kafka02.entrementes.io: 10.5.0.4
+
+networks:
+  kafka_cluster:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/16
+         gateway: 10.5.0.1
